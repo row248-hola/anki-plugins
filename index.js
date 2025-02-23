@@ -37,6 +37,7 @@ async function play(audioData) {
     // Get the audio context
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
+
     // Decode the raw PCM data to an AudioBuffer
     audioContext.decodeAudioData(byteArray.buffer, function(buffer) {
       // Create a buffer source node
@@ -58,7 +59,7 @@ const playAISentence = async (word) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer <change_me>'
+          'Authorization': 'Bearer <redacted>'
         },
         body: JSON.stringify({
           'model': 'gpt-4o-mini-audio-preview',
@@ -68,7 +69,7 @@ const playAISentence = async (word) => {
               'content': [
                 {
                   'type': 'text',
-                  'text': '"I give you a word and you tell tell me example of a sentence with that word.'
+                  'text': '"I give you a word and you tell tell me example of a sentence with that word. Vary your answers but give me only one'
                 }
               ]
             },
