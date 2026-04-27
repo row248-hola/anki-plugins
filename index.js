@@ -8,6 +8,8 @@
 // @grant        GM_addStyle
 // ==/UserScript==
 
+const AUTHORIZATION_HEADER = 'Bearer REDACTED'
+
 const globalStyles = `
 .anki-plugin-ai-sentence {
     display: flex;
@@ -15,6 +17,7 @@ const globalStyles = `
     justify-content: center;
     position: relative;
     cursor: pointer;
+    padding: 3px;
 }
     
 .anki-plugin-ai-sentence svg {
@@ -54,12 +57,39 @@ async function play(audioData) {
     });
 }
 
+const showGeneratedSentence = (sentence) => {
+  if (document.querySelector('.anki-plugin-ai-sentence-text')) {
+    document.querySelector('.anki-plugin-ai-sentence-text').remove()
+  }
+
+  const container = document.querySelector('#qa');
+  container.insertAdjacentHTML('beforeend', `<div class="anki-plugin-ai-sentence-text">${sentence}</div>`)
+}
+
+const tts = async (text) => {
+  const form = new FormData();
+  form.append('text', text);
+  form.append('voice', 'es-ES-AlvaroNeural');
+  form.append('title', 'Ella_pareci_cansada');
+
+  const response = await fetch('https://www.freevoicereader.com/api/free-tts', {
+    method: 'POST',
+    body: form
+  });
+
+  // convert response binary data to base64
+  const arrayBuffer = await response.arrayBuffer();
+  const binaryString = String.fromCharCode(...new Uint8Array(arrayBuffer));
+  const base64 = btoa(binaryString);
+  await play(base64);
+}
+
 const playAISentence = async (word) => {
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer <redacted>'
+          'Authorization': AUTHORIZATION_HEADER
         },
         body: JSON.stringify({
           'model': 'gpt-4o-mini-audio-preview',
@@ -69,7 +99,7 @@ const playAISentence = async (word) => {
               'content': [
                 {
                   'type': 'text',
-                  'text': '"I give you a word and you tell tell me example of a sentence with that word. Vary your answers but give me only one'
+                  'text': 'You are a helpful assistant for language learners. I will give you a word and you will give me a sentenxt where that words is used. Vary your answers but response me with ONLY ONE sentence'
                 }
               ]
             },
@@ -104,8 +134,60 @@ const playAISentence = async (word) => {
 
     const json = await resp.json()
     const audioData = json.choices[0].message.audio.data;
+    const textData = json.choices[0].message.audio.transcript;
 
     await play(audioData)
+    showGeneratedSentence(textData)
+}
+
+const generateAISentence = async (word) => {
+ const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': AUTHORIZATION_HEADER
+        },
+        body: JSON.stringify({
+          'model': 'gpt-4.1-nano',
+          'messages': [
+            {
+              'role': 'system',
+              'content': [
+                {
+                  'type': 'text',
+                  'text': 'You are a helpful assistant for language learners. I will give you a word and you will give me a sentenxt where that words is used. Vary your answers but response me with ONLY ONE sentence'
+                }
+              ]
+            },
+            {
+              'role': 'user',
+              'content': [
+                {
+                  'type': 'text',
+                  'text': word
+                }
+              ]
+            }
+          ],
+          'modalities': [
+            'text',
+          ],
+          'response_format': {
+            'type': 'text'
+          },
+          'temperature': 1,
+          'max_completion_tokens': 2048,
+          'top_p': 1,
+          'frequency_penalty': 0,
+          'presence_penalty': 0
+        })
+      });
+
+    const json = await resp.json()
+    const textData = json.choices[0].message.content;
+
+    showGeneratedSentence(textData)
+    await tts(textData)   
 }
 
 setTimeout(() => {
@@ -120,6 +202,7 @@ setTimeout(() => {
 
     document.querySelector('.anki-plugin-ai-sentence').onclick = (e) => {
         const word = document.querySelector('#qa').innerText;
-        playAISentence(word)
+        // playAISentence(word)
+        generateAISentence(word)
     }
 }, 1000)
