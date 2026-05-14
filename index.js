@@ -8,7 +8,8 @@
 // @grant        GM_addStyle
 // ==/UserScript==
 
-const AUTHORIZATION_HEADER = 'Bearer REDACTED'
+const AUTHORIZATION_HEADER =
+  "Bearer REDACTED";
 
 const globalStyles = `
 .anki-plugin-ai-sentence {
@@ -28,25 +29,34 @@ const globalStyles = `
 .anki-plugin-ai-sentence-text hr {
     background-color: #000;
 }
-`
+`;
 
-const playIcon = '<svg fill="#1c7eca" height="200px" width="200px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 60 60" xml:space="preserve" stroke="#1c7eca"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M45.563,29.174l-22-15c-0.307-0.208-0.703-0.231-1.031-0.058C22.205,14.289,22,14.629,22,15v30 c0,0.371,0.205,0.711,0.533,0.884C22.679,45.962,22.84,46,23,46c0.197,0,0.394-0.059,0.563-0.174l22-15 C45.836,30.64,46,30.331,46,30S45.836,29.36,45.563,29.174z M24,43.107V16.893L43.225,30L24,43.107z"></path> <path d="M30,0C13.458,0,0,13.458,0,30s13.458,30,30,30s30-13.458,30-30S46.542,0,30,0z M30,58C14.561,58,2,45.439,2,30 S14.561,2,30,2s28,12.561,28,28S45.439,58,30,58z"></path> </g> </g></svg>'
+const playIcon =
+  '<svg fill="#1c7eca" height="200px" width="200px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 60 60" xml:space="preserve" stroke="#1c7eca"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M45.563,29.174l-22-15c-0.307-0.208-0.703-0.231-1.031-0.058C22.205,14.289,22,14.629,22,15v30 c0,0.371,0.205,0.711,0.533,0.884C22.679,45.962,22.84,46,23,46c0.197,0,0.394-0.059,0.563-0.174l22-15 C45.836,30.64,46,30.331,46,30S45.836,29.36,45.563,29.174z M24,43.107V16.893L43.225,30L24,43.107z"></path> <path d="M30,0C13.458,0,0,13.458,0,30s13.458,30,30,30s30-13.458,30-30S46.542,0,30,0z M30,58C14.561,58,2,45.439,2,30 S14.561,2,30,2s28,12.561,28,28S45.439,58,30,58z"></path> </g> </g></svg>';
+
+function getWord() {
+  const word = document.querySelector("#qa").innerText;
+
+  // Get only the first line of the word
+  return word.replace(/\n.*/g, '');
+}
 
 async function play(audioData) {
-    const binaryData = atob(audioData);
+  const binaryData = atob(audioData);
 
-    // Convert the binary data to an ArrayBuffer
-    const byteArray = new Uint8Array(binaryData.length);
-    for (let i = 0; i < binaryData.length; i++) {
-      byteArray[i] = binaryData.charCodeAt(i);
-    }
+  // Convert the binary data to an ArrayBuffer
+  const byteArray = new Uint8Array(binaryData.length);
+  for (let i = 0; i < binaryData.length; i++) {
+    byteArray[i] = binaryData.charCodeAt(i);
+  }
 
-    // Get the audio context
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  // Get the audio context
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-
-    // Decode the raw PCM data to an AudioBuffer
-    audioContext.decodeAudioData(byteArray.buffer, function(buffer) {
+  // Decode the raw PCM data to an AudioBuffer
+  audioContext.decodeAudioData(
+    byteArray.buffer,
+    function (buffer) {
       // Create a buffer source node
       const source = audioContext.createBufferSource();
       source.buffer = buffer;
@@ -56,29 +66,34 @@ async function play(audioData) {
 
       // Start playing the audio
       source.start(0);
-    }, function(error) {
+    },
+    function (error) {
       console.error("Error decoding audio data", error);
-    });
+    },
+  );
 }
 
 const showGeneratedSentence = (sentence) => {
-  if (document.querySelector('.anki-plugin-ai-sentence-text')) {
-    document.querySelector('.anki-plugin-ai-sentence-text').remove()
+  if (document.querySelector(".anki-plugin-ai-sentence-text")) {
+    document.querySelector(".anki-plugin-ai-sentence-text").remove();
   }
 
-  const container = document.querySelector('#qa');
-  container.insertAdjacentHTML('beforeend', `<div class="anki-plugin-ai-sentence-text"><hr/>${sentence}</div>`)
-}
+  const container = document.querySelector("#qa");
+  container.insertAdjacentHTML(
+    "beforeend",
+    `<div class="anki-plugin-ai-sentence-text"><hr/>${sentence}</div>`,
+  );
+};
 
 const tts = async (text) => {
   const form = new FormData();
-  form.append('text', text);
-  form.append('voice', 'es-ES-AlvaroNeural');
-  form.append('title', 'Ella_pareci_cansada');
+  form.append("text", text);
+  form.append("voice", "es-ES-AlvaroNeural");
+  form.append("title", "Ella_pareci_cansada");
 
-  const response = await fetch('https://www.freevoicereader.com/api/free-tts', {
-    method: 'POST',
-    body: form
+  const response = await fetch("https://www.freevoicereader.com/api/free-tts", {
+    method: "POST",
+    body: form,
   });
 
   // convert response binary data to base64
@@ -86,127 +101,138 @@ const tts = async (text) => {
   const binaryString = String.fromCharCode(...new Uint8Array(arrayBuffer));
   const base64 = btoa(binaryString);
   await play(base64);
-}
+};
 
 const playAISentence = async (word) => {
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': AUTHORIZATION_HEADER
-        },
-        body: JSON.stringify({
-          'model': 'gpt-4o-mini-audio-preview',
-          'messages': [
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: AUTHORIZATION_HEADER,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini-audio-preview",
+      messages: [
+        {
+          role: "system",
+          content: [
             {
-              'role': 'system',
-              'content': [
-                {
-                  'type': 'text',
-                  'text': 'You are a helpful assistant for language learners. I will give you a word and you will give me a sentenxt where that words is used. Vary your answers but response me with ONLY ONE sentence'
-                }
-              ]
+              type: "text",
+              text: "You are a helpful assistant for language learners. I will give you a word and you will give me a sentenxt where that words is used. Vary your answers but response me with ONLY ONE sentence",
             },
+          ],
+        },
+        {
+          role: "user",
+          content: [
             {
-              'role': 'user',
-              'content': [
-                {
-                  'type': 'text',
-                  'text': word
-                }
-              ]
-            }
+              type: "text",
+              text: word,
+            },
           ],
-          'modalities': [
-            'text',
-            'audio'
-          ],
-          'audio': {
-            'voice': 'alloy',
-            'format': 'mp3'
-          },
-          'response_format': {
-            'type': 'text'
-          },
-          'temperature': 1,
-          'max_completion_tokens': 2048,
-          'top_p': 1,
-          'frequency_penalty': 0,
-          'presence_penalty': 0
-        })
-      });
+        },
+      ],
+      modalities: ["text", "audio"],
+      audio: {
+        voice: "alloy",
+        format: "mp3",
+      },
+      response_format: {
+        type: "text",
+      },
+      temperature: 1,
+      max_completion_tokens: 2048,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    }),
+  });
 
-    const json = await resp.json()
-    const audioData = json.choices[0].message.audio.data;
-    const textData = json.choices[0].message.audio.transcript;
+  const json = await resp.json();
+  const audioData = json.choices[0].message.audio.data;
+  const textData = json.choices[0].message.audio.transcript;
 
-    await play(audioData)
-    showGeneratedSentence(textData)
-}
+  await play(audioData);
+  showGeneratedSentence(textData);
+};
 
 const generateAISentence = async (word) => {
- const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': AUTHORIZATION_HEADER
-        },
-        body: JSON.stringify({
-          'model': 'gpt-4.1-nano',
-          'messages': [
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: AUTHORIZATION_HEADER,
+    },
+    body: JSON.stringify({
+      model: "gpt-4.1-nano",
+      messages: [
+        {
+          role: "system",
+          content: [
             {
-              'role': 'system',
-              'content': [
-                {
-                  'type': 'text',
-                  'text': 'You are a helpful assistant for language learners. I will give you a word and you will give me a sentenxt where that words is used. Vary your answers but response me with ONLY ONE sentence'
-                }
-              ]
+              type: "text",
+              text: "You are a helpful assistant for language learners. I will give you a word and you will give me a sentense where that words is used. You can change a forms of that word (e.g., conjugations). Vary your answers but response me with ONLY ONE sentence, it should be in Spanish",
             },
+          ],
+        },
+        {
+          role: "user",
+          content: [
             {
-              'role': 'user',
-              'content': [
-                {
-                  'type': 'text',
-                  'text': word
-                }
-              ]
-            }
+              type: "text",
+              text: word,
+            },
           ],
-          'modalities': [
-            'text',
-          ],
-          'response_format': {
-            'type': 'text'
-          },
-          'temperature': 1,
-          'max_completion_tokens': 2048,
-          'top_p': 1,
-          'frequency_penalty': 0,
-          'presence_penalty': 0
-        })
-      });
+        },
+      ],
+      modalities: ["text"],
+      response_format: {
+        type: "text",
+      },
+      temperature: 1,
+      max_completion_tokens: 2048,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    }),
+  });
 
-    const json = await resp.json()
-    const textData = json.choices[0].message.content;
+  const json = await resp.json();
+  const textData = json.choices[0].message.content;
 
-    showGeneratedSentence(textData)
-    await tts(textData)   
-}
+  showGeneratedSentence(textData);
+  await tts(textData);
+};
 
 setTimeout(() => {
-    // add global styles
-    const style = document.createElement('style');
-    style.innerHTML = globalStyles
-    document.head.appendChild(style);   
+  // add global styles
+  const style = document.createElement("style");
+  style.innerHTML = globalStyles;
+  document.head.appendChild(style);
 
-    // add play button
-    const wordElem = document.querySelector('.pt-1');
-    wordElem.insertAdjacentHTML('beforeend', `<div class="anki-plugin-ai-sentence">${playIcon}</div>`)
+  // add play button
+  const wordElem = document.querySelector(".pt-1");
+  wordElem.insertAdjacentHTML(
+    "beforeend",
+    `<div class="anki-plugin-ai-sentence">${playIcon}</div>`,
+  );
 
-    document.querySelector('.anki-plugin-ai-sentence').onclick = (e) => {
-        const word = document.querySelector('#qa').innerText;
-        // playAISentence(word)
-        generateAISentence(word)
+  document.querySelector(".anki-plugin-ai-sentence").onclick = (e) => {
+    generateAISentence(getWord());
+  };
+}, 1000);
+
+let previosWord = null;
+
+setInterval(() => {
+  const answerIsShown = document.querySelector("#qa #answer") != null;
+  if (!answerIsShown) {
+    const word = getWord();
+    if (previosWord == word) {
+      return;
     }
-}, 1000)
+
+    previosWord = word;
+    generateAISentence(word);
+  }
+}, 500);
